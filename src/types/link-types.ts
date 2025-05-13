@@ -8,8 +8,6 @@ export type InstagramLinkType =
   | 'instagram_story'
   | 'instagram_profile'
   | 'instagram_igtv'
-  | 'instagram_guide'
-  | 'instagram_highlight';
 
 // Facebook Link Types
 export type FacebookLinkType =

@@ -59,7 +59,7 @@ describe("instagram-normalizer", () => {
     for (const postId of testCases) {
       const result = normalizer.normalize({
         url: postId,
-        whenNotFoundUse: 'instagram_post'
+        onNotFoundTryWith: 'instagram_post'
       });
 
       expect(result).toBeDefined();
@@ -114,7 +114,7 @@ describe("instagram-normalizer", () => {
     // Test whenNotFoundUse
     const result = normalizer.normalize({
       url: 'DAVtfMKudel',
-      whenNotFoundUse: 'instagram_reel'
+      onNotFoundTryWith: 'instagram_reel'
     });
 
     expect(result).toBeDefined();
@@ -168,7 +168,7 @@ describe("instagram-normalizer", () => {
     for (const username of usernameCases) {
       const result = normalizer.normalize({
         url: username,
-        whenNotFoundUse: 'instagram_story'
+        onNotFoundTryWith: 'instagram_story'
       });
 
       expect(result).toBeDefined();
@@ -192,13 +192,10 @@ describe("instagram-normalizer", () => {
       'www.instagram.com/camilacoelho/',
       'http://www.instagram.com/camilacoelho',
       'http://www.instagram.com/camilacoelho/',
-      '@camilacoelho',
-      'camilacoelho',
     ];
 
     for (const url of testCases) {
       const result = normalizer.normalize({ url });
-      console.log('result for', url, result);
       expect(result).toBeDefined();
       expect(result?.url).toBe('https://www.instagram.com/camilacoelho/');
       expect(result?.type).toBe('instagram_profile');
@@ -207,18 +204,70 @@ describe("instagram-normalizer", () => {
     }
 
     // Test whenNotFoundUse
-    //     const usernameCases = ['@camilacoelho', 'camilacoelho'];
-    //     for (const username of usernameCases) {
-    //       const result = normalizer.normalize({
-    //         url: username,
-    //         whenNotFoundUse: 'instagram_profile'
-    //       });
-    // 
-    //       expect(result).toBeDefined();
-    //       expect(result?.url).toBe('https://www.instagram.com/camilacoelho/');
-    //       expect(result?.type).toBe('instagram_profile');
-    //       expect(result?.network).toBe('instagram');
-    //       expect(result?.data?.username).toBe('camilacoelho');
-    //     }
+    const usernameCases = [
+      '@camilacoelho',
+      'camilacoelho',
+      'https://www.instagram.com/stories/camilacoelho/3631755389213869778/',
+      'https://www.instagram.com/stories/camilacoelho/3631755389213869778/?igsh=MXFhZmVudHNl',
+      'instagram.com/camilacoelho/p/CzZ0Z_vjF8b',
+      'instagram.com/camilacoelho/reel/CzZ0Z_vjF8b',
+      'instagram.com/camilacoelho/tv/CzZ0Z_vjF8b',
+    ];
+
+    for (const username of usernameCases) {
+      const result = normalizer.normalize({
+        url: username,
+        onNotFoundTryWith: 'instagram_profile'
+      });
+
+      expect(result).toBeDefined();
+      expect(result?.url).toBe('https://www.instagram.com/camilacoelho/');
+      expect(result?.type).toBe('instagram_profile');
+      expect(result?.network).toBe('instagram');
+      expect(result?.data?.username).toBe('camilacoelho');
+    }
   });
+
+  it("can force resolve as a specific type", () => {
+    const normalizer = new InstagramNormalizer();
+
+    // Resolve post
+    const resultPost = normalizer.normalize({
+      url: 'https://www.instagram.com/camilacoelho/p/CzZ0Z_vjF8b',
+      attemptToResolveAs: 'instagram_post'
+    });
+
+    expect(resultPost).toBeDefined();
+    expect(resultPost?.type).toBe('instagram_post');
+    expect(resultPost?.network).toBe('instagram');
+    expect(resultPost?.data?.mediaId).toBeDefined();
+    expect(resultPost?.data?.mediaId).toBe(normalizer.fromShortCodeToMediaId('CzZ0Z_vjF8b'));
+
+    // Resolve profile
+    const profileCases = [
+      'https://www.instagram.com/camilacoelho',
+      'https://www.instagram.com/camilacoelho/',
+      'https://www.instagram.com/camilacoelho/?igsh=MXFhZmVudHNl',
+      'instagram.com/camilacoelho',
+      'instagram.com/camilacoelho/',
+      'https://www.instagram.com/camilacoelho/p/CzZ0Z_vjF8b',
+      'https://www.instagram.com/camilacoelho/reel/CzZ0Z_vjF8b',
+      'https://www.instagram.com/camilacoelho/tv/CzZ0Z_vjF8b',
+      'camilacoelho',
+      '@camilacoelho',
+    ];
+
+    for (const url of profileCases) {
+      const resultProfile = normalizer.normalize({
+        url,
+        attemptToResolveAs: 'instagram_profile'
+      });
+
+      expect(resultProfile).toBeDefined();
+      expect(resultProfile?.type).toBe('instagram_profile');
+      expect(resultProfile?.network).toBe('instagram');
+      expect(resultProfile?.data?.username).toBe('camilacoelho');
+    }
+  });
+
 });

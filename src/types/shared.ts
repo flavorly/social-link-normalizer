@@ -4,7 +4,8 @@ export interface NormalizerOptions {
   url: string;
   type?: SocialLinkType;
   discovery?: boolean;
-  whenNotFoundUse?: SocialLinkType;
+  onNotFoundTryWith?: SocialLinkType;
+  attemptToResolveAs?: SocialLinkType;
 }
 
 export type SocialNetwork = 'instagram'

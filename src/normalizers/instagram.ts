@@ -2,6 +2,7 @@ import type { InstagramLinkType } from "../types/link-types";
 import type { NormalizedLinkResult, Normalizer, NormalizerOptions } from "../types/shared";
 import { removeProtocalAndWWW } from "../utils/url";
 
+type InstagramNormalizerResult = NormalizedLinkResult<InstagramLinkType> | undefined
 export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
 
   public static readonly MEDIA_PATTERNS = [
@@ -25,29 +26,38 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
   ];
 
   public static readonly USERNAME_PATTERN = [
-    /^@?(?<username>[a-zA-Z0-9._]{1,30})(?:\/(?:[^p/][\w.-]*)*)?\/?$/i
+    // Direct profile URLs
+    /^(?<username>[a-zA-Z0-9._]{1,30})\/?(?:\?.*)?$/i,
+    // Story URLs
+    /^stories\/(?<username>[a-zA-Z0-9._]{1,30})/i,
+    // Post/Reel URLs with username
+    /^(?<username>[a-zA-Z0-9._]{1,30})\/(p|reel|tv)\//i
   ];
 
   normalize(options: NormalizerOptions): NormalizedLinkResult<InstagramLinkType> | undefined {
     const url = removeProtocalAndWWW(options.url);
 
     let path = url.match(/^(?:instagram\.com|instagr\.am)\/(.+)$/i)?.[1]
-    if (!options.whenNotFoundUse && !path) {
+    if (!options.onNotFoundTryWith && !path) {
       return undefined;
     }
 
     // We get the path extracted or use the URL
     path = path ?? options.url;
 
-    const checks = [
-      this.photos({ ...options, url: path }),
-      this.tv({ ...options, url: path }),
-      this.reels({ ...options, url: path }),
-      this.stories({ ...options, url: path }),
-      this.username({ ...options, url: path }),
-    ];
+    const checks: Record<InstagramLinkType, NormalizedLinkResult<InstagramLinkType> | undefined> = {
+      instagram_post: this.photos({ ...options, url: path }),
+      instagram_igtv: this.tv({ ...options, url: path }),
+      instagram_reel: this.reels({ ...options, url: path }),
+      instagram_story: this.stories({ ...options, url: path }),
+      instagram_profile: this.username({ ...options, url: path }),
+    };
 
-    for (const check of checks) {
+    if (options.attemptToResolveAs) {
+      return checks[options.attemptToResolveAs as InstagramLinkType];
+    }
+
+    for (const check of Object.values(checks)) {
       if (check) {
         return check;
       }
@@ -56,7 +66,7 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
     return undefined;
   }
 
-  photos(options: NormalizerOptions): NormalizedLinkResult<InstagramLinkType> | undefined {
+  photos(options: NormalizerOptions): InstagramNormalizerResult {
     for (const pattern of InstagramNormalizer.PHOTO_PATTERNS) {
       const match = options.url.match(pattern);
       if (match) {
@@ -66,14 +76,14 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
       }
     }
 
-    if (options.whenNotFoundUse === "instagram_post") {
+    if (options.onNotFoundTryWith === "instagram_post") {
       return this.toGenericUrl({ postId: options.url, type: "instagram_post", urlPath: "p" });
     }
 
     return undefined;
   }
 
-  tv(options: NormalizerOptions): NormalizedLinkResult<InstagramLinkType> | undefined {
+  tv(options: NormalizerOptions): InstagramNormalizerResult {
     for (const pattern of InstagramNormalizer.TV_PATTERNS) {
       const match = options.url.match(pattern);
       if (match) {
@@ -83,14 +93,14 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
       }
     }
 
-    if (options.whenNotFoundUse === "instagram_igtv") {
+    if (options.onNotFoundTryWith === "instagram_igtv") {
       return this.toGenericUrl({ postId: options.url, type: "instagram_igtv", urlPath: "tv" });
     }
 
     return undefined;
   }
 
-  reels(options: NormalizerOptions): NormalizedLinkResult<InstagramLinkType> | undefined {
+  reels(options: NormalizerOptions): InstagramNormalizerResult {
     for (const pattern of InstagramNormalizer.REEL_PATTERNS) {
       const match = options.url.match(pattern);
       if (match) {
@@ -100,14 +110,14 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
       }
     }
 
-    if (options.whenNotFoundUse === "instagram_reel") {
+    if (options.onNotFoundTryWith === "instagram_reel") {
       return this.toGenericUrl({ postId: options.url, type: "instagram_reel", urlPath: "reel" });
     }
 
     return undefined;
   }
 
-  stories(options: NormalizerOptions): NormalizedLinkResult<InstagramLinkType> | undefined {
+  stories(options: NormalizerOptions): InstagramNormalizerResult {
     for (const pattern of InstagramNormalizer.STORY_PATTERNS) {
       const match = options.url.match(pattern);
       if (match) {
@@ -135,7 +145,7 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
       }
     }
 
-    if (options.whenNotFoundUse === "instagram_story") {
+    if (options.onNotFoundTryWith === "instagram_story") {
       const username = options.url.replace('@', '');
       return {
         url: `https://www.instagram.com/stories/${username}/`,
@@ -150,7 +160,7 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
     return undefined;
   }
 
-  username(options: NormalizerOptions): NormalizedLinkResult<InstagramLinkType> | undefined {
+  username(options: NormalizerOptions): InstagramNormalizerResult {
     for (const pattern of InstagramNormalizer.USERNAME_PATTERN) {
       const match = options.url.match(pattern);
       if (match) {
@@ -160,28 +170,25 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
           return undefined;
         }
 
-        // Clean the username (remove @ if present)
-        const cleanUsername = username.replace(/^@/, '');
-
         return {
-          url: `https://www.instagram.com/${cleanUsername}/`,
+          url: `https://www.instagram.com/${username}/`,
           type: "instagram_profile",
           network: "instagram",
           data: {
-            username: cleanUsername
+            username
           },
         };
       }
     }
 
-    if (options.whenNotFoundUse === "instagram_profile") {
-      const cleanUsername = options.url.replace(/^@/, '');
+    if (options.onNotFoundTryWith === "instagram_profile") {
+      const username = options.url.replace(/^@/, '');
       return {
-        url: `https://www.instagram.com/${cleanUsername}/`,
+        url: `https://www.instagram.com/${username}/`,
         type: "instagram_profile",
         network: "instagram",
         data: {
-          username: cleanUsername
+          username
         },
       };
     }
