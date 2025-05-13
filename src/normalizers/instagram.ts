@@ -39,13 +39,13 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
   normalize(options: NormalizerOptions): NormalizedLinkResult<InstagramLinkType> | undefined {
     const url = removeProtocalAndWWW(options.url);
 
-    // Extract path after domain
-    const isInstagramDomain = url.match(/^(?:instagram\.com|instagr\.am)\/(.+)$/i);
-    if (!isInstagramDomain || !isInstagramDomain[1]) {
+    let path = url.match(/^(?:instagram\.com|instagr\.am)\/(.+)$/i)?.[1]
+    if (!options.whenNotFoundUse && !path) {
       return undefined;
     }
 
-    const path = isInstagramDomain[1];
+    // We get the path extracted or use the URL
+    path = path ?? options.url;
 
     const checks = [
       this.photos({ ...options, url: path }),
@@ -65,15 +65,20 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
     return undefined;
   }
 
-  private photos(options: NormalizerOptions): NormalizedLinkResult<InstagramLinkType> | undefined {
+  photos(options: NormalizerOptions): NormalizedLinkResult<InstagramLinkType> | undefined {
     for (const pattern of InstagramNormalizer.PHOTO_PATTERNS) {
       const match = options.url.match(pattern);
       if (match) {
         const { username, postId } = match.groups ?? {};
 
+
         const link = username
           ? `https://www.instagram.com/${username}/p/${postId}`
           : `https://www.instagram.com/p/${postId}`;
+
+        if (!postId) {
+          return undefined;
+        }
 
         return {
           url: link,
@@ -82,6 +87,7 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
           data: {
             username,
             postId,
+            mediaId: this.fromShortCodeToMediaId(postId),
           },
         };
       }
@@ -94,6 +100,7 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
         network: "instagram",
         data: {
           postId: options.url,
+          mediaId: this.fromShortCodeToMediaId(options.url),
         },
       };
     }
@@ -101,38 +108,41 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
     return undefined;
   }
 
-  private fromShortCodeToMediaId(code: string): string | undefined {
+  fromShortCodeToMediaId(shortcode: string): string | undefined {
     try {
-      const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
-      const base = alphabet.length;
-      let mediaId = 0;
+      const code = 'A'.repeat(Math.max(0, 12 - shortcode.length)) + shortcode;
+      const standardBase64 = code
+        .replace(/-/g, '+')
+        .replace(/_/g, '/');
 
-      for (const char of code) {
-        const index = alphabet.indexOf(char);
-        if (index === -1) {
-          throw new Error(`Invalid character "${char}" in shortcode`);
-        }
-        mediaId = mediaId * base + index;
+      const paddedBase64 = standardBase64.padEnd(Math.ceil(standardBase64.length / 4) * 4, '=');
+      const buffer = Buffer.from(paddedBase64, 'base64');
+      let value = 0n;
+      for (const byte of buffer) {
+        value = (value << 8n) | BigInt(byte);
       }
-
-      return mediaId.toString();
+      return value.toString();
     } catch {
       return undefined;
     }
   }
 
-  private fromMediaIdtoShortCode(mediaId: number): string | undefined {
+  fromMediaIdtoShortCode(mediaId: string | number): string | undefined {
     try {
-      const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
-      const base = alphabet.length;
-      let shortcode = '';
+      let id = BigInt(mediaId);
 
-      while (mediaId > 0) {
-        const remainder = mediaId % base;
-        shortcode = alphabet[remainder] + shortcode;
-        mediaId = Math.floor(mediaId / base);
+      const buffer = Buffer.alloc(9);
+      for (let i = 8; i >= 0; i--) {
+        buffer[i] = Number(id & 255n);
+        id >>= 8n;
       }
-      return shortcode;
+      let encoded = buffer.toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=/g, '');
+      encoded = encoded.replace(/^A+/, '').padStart(11, 'A');
+
+      return encoded;
     } catch {
       return undefined;
     }

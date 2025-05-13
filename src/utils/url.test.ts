@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { removeProtocalAndWWW } from "./url";
 
-describe("link-normalizer", () => {
+describe("utils/url", () => {
   it("should remove protocol and www from url", () => {
     expect(removeProtocalAndWWW("https://www.google.com")).toBe("google.com");
     expect(removeProtocalAndWWW("http://www.google.com")).toBe("google.com");
