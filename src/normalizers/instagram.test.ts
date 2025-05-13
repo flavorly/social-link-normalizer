@@ -77,4 +77,107 @@ describe("instagram-normalizer", () => {
       expect(result).toBeUndefined();
     }
   });
+
+  it("should normalize all instagram reel URL formats", () => {
+    const normalizer = new InstagramNormalizer();
+
+    const testCases = [
+      'https://www.instagram.com/camila_cabral_/reel/DAVtfMKudel?igsh=MXFhZmVudHNl',
+      'https://www.instagram.com/reel/DAVtfMKudel',
+      'https://www.instagram.com/reel/DAVtfMKudel/',
+      'instagram.com/reel/DAVtfMKudel',
+      'www.instagram.com/reel/DAVtfMKudel',
+      'instagram.com/reel/DAVtfMKudel/',
+      'www.instagram.com/reel/DAVtfMKudel/',
+    ];
+
+    for (const url of testCases) {
+      const result = normalizer.normalize({ url });
+      expect(result).toBeDefined();
+
+      const expectedUrl = url.includes('/camila_cabral_/')
+        ? 'https://www.instagram.com/camila_cabral_/reel/DAVtfMKudel'
+        : 'https://www.instagram.com/reel/DAVtfMKudel';
+
+      expect(result?.url).toBe(expectedUrl);
+      expect(result?.type).toBe('instagram_reel');
+      expect(result?.network).toBe('instagram');
+      expect(result?.data?.mediaId).toBeDefined();
+      expect(result?.data?.mediaId).toBe(normalizer.fromShortCodeToMediaId('DAVtfMKudel'));
+      expect(result?.data?.postId).toBe('DAVtfMKudel');
+
+      if (url.includes('/camila_cabral_/')) {
+        expect(result?.data?.username).toBe('camila_cabral_');
+      }
+    }
+
+    // Test whenNotFoundUse
+    const result = normalizer.normalize({
+      url: 'DAVtfMKudel',
+      whenNotFoundUse: 'instagram_reel'
+    });
+
+    expect(result).toBeDefined();
+    expect(result?.url).toBe('https://www.instagram.com/reel/DAVtfMKudel');
+    expect(result?.type).toBe('instagram_reel');
+    expect(result?.network).toBe('instagram');
+    expect(result?.data?.mediaId).toBeDefined();
+    expect(result?.data?.postId).toBe('DAVtfMKudel');
+  });
+
+  it("should normalize all instagram story URL formats", () => {
+    const normalizer = new InstagramNormalizer();
+
+    const testCases = [
+      'https://www.instagram.com/stories/camilacoelho/',
+      'https://www.instagram.com/stories/camilacoelho/?igsh=MXFhZmVudHNl',
+      'https://www.instagram.com/stories/camilacoelho/1234567890',
+      'https://www.instagram.com/stories/camilacoelho/1234567890/?igsh=MXFhZmVudHNl',
+      'instagram.com/stories/camilacoelho/',
+      'instagram.com/stories/camilacoelho/1234567890',
+      'instagram.com/stories/camilacoelho/1234567890/?igsh=MXFhZmVudHNl',
+      'www.instagram.com/stories/camilacoelho/',
+      'www.instagram.com/stories/camilacoelho/1234567890',
+      'www.instagram.com/stories/camilacoelho/1234567890/?igsh=MXFhZmVudHNl',
+      'http://www.instagram.com/stories/camilacoelho/',
+      'http://www.instagram.com/stories/camilacoelho/1234567890',
+      'http://www.instagram.com/stories/camilacoelho/1234567890/?igsh=MXFhZmVudHNl',
+      'camilacoelho',
+      '@camilacoelho',
+    ];
+
+    for (const url of testCases) {
+      const result = normalizer.normalize({ url });
+      expect(result).toBeDefined();
+
+      const hasPostId = url.includes('1234567890');
+      const expectedUrl = hasPostId
+        ? 'https://www.instagram.com/stories/camilacoelho/1234567890'
+        : 'https://www.instagram.com/stories/camilacoelho/';
+
+      expect(result?.url).toBe(expectedUrl);
+      expect(result?.type).toBe('instagram_story');
+      expect(result?.network).toBe('instagram');
+      expect(result?.data?.username).toBe('camilacoelho');
+
+      if (hasPostId) {
+        expect(result?.data?.postId).toBe('1234567890');
+      }
+    }
+
+    // Test whenNotFoundUse with username
+    const usernameCases = ['@camilacoelho', 'camilacoelho'];
+    for (const username of usernameCases) {
+      const result = normalizer.normalize({
+        url: username,
+        whenNotFoundUse: 'instagram_story'
+      });
+
+      expect(result).toBeDefined();
+      expect(result?.url).toBe('https://www.instagram.com/stories/camilacoelho/');
+      expect(result?.type).toBe('instagram_story');
+      expect(result?.network).toBe('instagram');
+      expect(result?.data?.username).toBe('camilacoelho');
+    }
+  });
 });

@@ -113,6 +113,49 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
     return undefined;
   }
 
+  stories(options: NormalizerOptions): NormalizedLinkResult<InstagramLinkType> | undefined {
+    for (const pattern of InstagramNormalizer.STORY_PATTERNS) {
+      const match = options.url.match(pattern);
+      if (match) {
+        const { username, storyUsername, postId } = match.groups ?? {};
+
+        const targetUsername = storyUsername ?? username;
+        if (!targetUsername) return undefined;
+
+        // Stories have a different URL structure
+        const link = postId
+          ? `https://www.instagram.com/stories/${targetUsername}/${postId}`
+          : `https://www.instagram.com/stories/${targetUsername}/`;
+
+        return {
+          url: link,
+          type: "instagram_story",
+          network: "instagram",
+          data: {
+            username: targetUsername,
+            ...(postId && {
+              postId
+            })
+          },
+        };
+      }
+    }
+
+    if (options.whenNotFoundUse === "instagram_story") {
+      const username = options.url.replace('@', '');
+      return {
+        url: `https://www.instagram.com/stories/${username}/`,
+        type: "instagram_story",
+        network: "instagram",
+        data: {
+          username
+        },
+      };
+    }
+
+    return undefined;
+  }
+
   fromShortCodeToMediaId(shortcode: string): string | undefined {
     try {
       const code = 'A'.repeat(Math.max(0, 12 - shortcode.length)) + shortcode;
