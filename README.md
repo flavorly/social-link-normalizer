@@ -1,4 +1,4 @@
-# packageName
+# 🤝 Social Link Normalizer
 
 <!-- automd:badges color=yellow -->
 
@@ -7,7 +7,8 @@
 
 <!-- /automd -->
 
-This is my package description.
+A package to normalize a wide range of social links, including:  Twitter, X, Instagram, Facebook, YouTube, Tiktok, Reddit.
+This package aims to find invalid links or malformed links and return a valid link in a standard format, excluding any tracking parameters, uncessary query parameters, or other metadata.
 
 ## Usage
 
@@ -15,7 +16,7 @@ Install the package:
 
 ```sh
 # ✨ Auto-detect (supports npm, yarn, pnpm, deno and bun)
-npx nypm install packageName
+npx nypm install social-link-normalizer
 ```
 
 Import:
@@ -25,13 +26,13 @@ Import:
 **ESM** (Node.js, Bun, Deno)
 
 ```js
-import {} from "pkg";
+import { normalize } from "social-link-normalizer";
 ```
 
 **CDN** (Deno, Bun and Browsers)
 
 ```js
-import {} from "https://esm.sh/pkg";
+import { normalize } from "https://esm.sh/social-link-normalizer";
 ```
 
 <!-- /automd -->
