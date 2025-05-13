@@ -1,37 +1,94 @@
-import type { InstagramLinkType, SocialLinkType } from "../types/link-types";
+import type { InstagramLinkType } from "../types/link-types";
 import type { NormalizedLinkResult, Normalizer, NormalizerOptions } from "../types/shared";
 import { removeProtocalAndWWW } from "../utils/url";
 
 export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
 
-  public static readonly DOMAIN_REGEX = /^(?:https?:\/\/)?(?:www\.)?instagram\.com/i;
-  public static readonly MEDIA_PATTERNS = [/^https?:\/\/(?:www\.)?instagram\.com\/(?:p|tv|videos?)\/([a-zA-Z0-9_-]+)/i];
-  public static readonly REEL_PATTERNS = [/^https?:\/\/(?:www\.)?instagram\.com\/reels?\/([a-zA-Z0-9_-]+)/i];
-  public static readonly STORY_PATTERNS = [/^https?:\/\/(?:www\.)?instagram\.com\/stories\/([a-zA-Z0-9._]{1,30})(?:\/[a-zA-Z0-9_-]+)?\/?/i];
-  public static readonly USERNAME_PATTERN = /^(?:https?:\/\/(?:www\.)?instagram\.com\/)?([a-zA-Z0-9._]{1,30})(?:\/(?:[^p/][\w.-]*)*)?\/?$/i;
-  public static readonly USER_PROFILE_PATH_PATTERN = /^https?:\/\/(?:www\.)?instagram\.com\/([a-zA-Z0-9._]{1,30})\/?(?!\w|\?.*)/i;
+  public static readonly MEDIA_PATTERNS = [
+    /^(?:([a-zA-Z0-9._]{1,30})\/)?(p|tv|video)\/([a-zA-Z0-9_-]+)/i
+  ];
 
-  normalize(options: NormalizerOptions): NormalizedLinkResult<InstagramLinkType> {
+  public static readonly PHOTO_PATTERNS = [
+    /^(?:([a-zA-Z0-9._]{1,30})\/)?(p)\/([a-zA-Z0-9_-]+)/i
+  ];
 
-    const url = removeProtocalAndWWW(options.url.toString());
+  public static readonly TV_PATTERNS = [
+    /^(?:([a-zA-Z0-9._]{1,30})\/)?(tv)\/([a-zA-Z0-9_-]+)/i
+  ];
 
-    
+  public static readonly VIDEO_PATTERNS = [
+    /^(?:([a-zA-Z0-9._]{1,30})\/)?(video)\/([a-zA-Z0-9_-]+)/i
+  ];
 
-    return {
-      url: "works!",
-      type: "instagram_likes",
-      network: "instagram",
-    };
+  public static readonly REEL_PATTERNS = [
+    /^(?:([a-zA-Z0-9._]{1,30})\/)?(reels?)\/([a-zA-Z0-9_-]+)/i
+  ];
+
+  public static readonly STORY_PATTERNS = [
+    /^(?:([a-zA-Z0-9._]{1,30})\/)?(stories)\/([a-zA-Z0-9._]{1,30})(?:\/[a-zA-Z0-9_-]+)?\/?/i
+  ];
+
+  public static readonly USERNAME_PATTERN = [
+    /^([a-zA-Z0-9._]{1,30})(?:\/(?:[^p/][\w.-]*)*)?\/?$/i
+  ];
+
+  public static readonly USER_PROFILE_PATH_PATTERN = [
+    /^([a-zA-Z0-9._]{1,30})\/?(?!\w|\?.*)/i
+  ];
+
+  normalize(options: NormalizerOptions): NormalizedLinkResult<InstagramLinkType> | undefined {
+    const url = removeProtocalAndWWW(options.url);
+
+    // Extract path after domain
+    const isInstagramDomain = url.match(/^(?:instagram\.com|instagr\.am)\/(.+)$/i);
+    if (!isInstagramDomain || !isInstagramDomain[1]) {
+      return undefined;
+    }
+
+    const path = isInstagramDomain[1];
+
+    const checks = [
+      this.photos({ ...options, url: path }),
+      // this.media(path),
+      // this.reels(path),
+      // this.stories(path),
+      // this.username(path),
+      // this.userProfile(path),
+    ];
+
+    for (const check of checks) {
+      if (check) {
+        return check;
+      }
+    }
+
+    return undefined;
   }
 
-  private isInstagramMedia(url: string): boolean {
-    return InstagramNormalizer.MEDIA_PATTERNS.some(pattern => pattern.test(url)) || this.fromShortCodeToMediaId(url) !== undefined;
-  }
+  private photos(options: NormalizerOptions): NormalizedLinkResult<InstagramLinkType> | undefined {
+    for (const pattern of InstagramNormalizer.PHOTO_PATTERNS) {
+      const match = options.url.match(pattern);
+      console.log(match);
+      if (match) {
+        const link = match[1] ? `https://www.instagram.com/${match[1]}/p/${match[2]}` : `https://www.instagram.com/p/${match[2]}`;
+        return {
+          url: link,
+          type: "instagram_post",
+          network: "instagram",
+        };
+      }
+    }
 
-  private isInstagramReel(url: string): boolean {
-    return InstagramNormalizer.REEL_PATTERNS.some(pattern => pattern.test(url));
-  }
+    if (options.whenNotFoundUse === "instagram_post") {
+      return {
+        url: `https://www.instagram.com/p/${options.url}`,
+        type: "instagram_post",
+        network: "instagram",
+      };
+    }
 
+    return undefined;
+  }
 
   private fromShortCodeToMediaId(code: string): string | undefined {
     try {

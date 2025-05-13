@@ -1,9 +1,10 @@
 import type { SocialLinkType } from './link-types';
 
 export interface NormalizerOptions {
-  url: string | URL;
+  url: string;
   type?: SocialLinkType;
   discovery?: boolean;
+  whenNotFoundUse?: SocialLinkType;
 }
 
 export type SocialNetwork = 'instagram'
@@ -35,14 +36,15 @@ export type SocialNetwork = 'instagram'
   | 'unknown';
 
 export interface Normalizer<T extends SocialLinkType = SocialLinkType> {
-  normalize(options: NormalizerOptions): NormalizedLinkResult<T>;
+  normalize(options: NormalizerOptions): NormalizedLinkResult<T> | undefined;
 }
 
 export type NormalizedLinkResult<T extends SocialLinkType = SocialLinkType> = {
   url: string;
   type: T;
   network: SocialNetwork;
-  data: {
+  error?: string;
+  data?: {
     post_id?: string | number;
     username?: string;
     user_id?: string | number;
