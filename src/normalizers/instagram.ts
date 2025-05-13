@@ -25,11 +25,7 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
   ];
 
   public static readonly USERNAME_PATTERN = [
-    /^(?<username>[a-zA-Z0-9._]{1,30})(?:\/(?:[^p/][\w.-]*)*)?\/?$/i
-  ];
-
-  public static readonly USER_PROFILE_PATH_PATTERN = [
-    /^(?<username>[a-zA-Z0-9._]{1,30})\/?(?!\w|\?.*)/i
+    /^@?(?<username>[a-zA-Z0-9._]{1,30})(?:\/(?:[^p/][\w.-]*)*)?\/?$/i
   ];
 
   normalize(options: NormalizerOptions): NormalizedLinkResult<InstagramLinkType> | undefined {
@@ -48,9 +44,7 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
       this.tv({ ...options, url: path }),
       this.reels({ ...options, url: path }),
       this.stories({ ...options, url: path }),
-      // this.stories({ ...options, url: path }),
-      // this.username({ ...options, url: path }),
-      // this.userProfile({ ...options, url: path }),
+      this.username({ ...options, url: path }),
     ];
 
     for (const check of checks) {
@@ -149,6 +143,45 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
         network: "instagram",
         data: {
           username
+        },
+      };
+    }
+
+    return undefined;
+  }
+
+  username(options: NormalizerOptions): NormalizedLinkResult<InstagramLinkType> | undefined {
+    for (const pattern of InstagramNormalizer.USERNAME_PATTERN) {
+      const match = options.url.match(pattern);
+      if (match) {
+        const { username } = match.groups ?? {};
+        if (!username) {
+          console.log('No username found', options.url);
+          return undefined;
+        }
+
+        // Clean the username (remove @ if present)
+        const cleanUsername = username.replace(/^@/, '');
+
+        return {
+          url: `https://www.instagram.com/${cleanUsername}/`,
+          type: "instagram_profile",
+          network: "instagram",
+          data: {
+            username: cleanUsername
+          },
+        };
+      }
+    }
+
+    if (options.whenNotFoundUse === "instagram_profile") {
+      const cleanUsername = options.url.replace(/^@/, '');
+      return {
+        url: `https://www.instagram.com/${cleanUsername}/`,
+        type: "instagram_profile",
+        network: "instagram",
+        data: {
+          username: cleanUsername
         },
       };
     }
