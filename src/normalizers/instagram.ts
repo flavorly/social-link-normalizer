@@ -5,35 +5,35 @@ import { removeProtocalAndWWW } from "../utils/url";
 export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
 
   public static readonly MEDIA_PATTERNS = [
-    /^(?:([a-zA-Z0-9._]{1,30})\/)?(p|tv|video)\/([a-zA-Z0-9_-]+)/i
+    /^(?:(?<username>[a-zA-Z0-9._]{1,30})\/)?((?<type>p|tv|video))\/(?<mediaId>[a-zA-Z0-9_-]+)/i
   ];
 
   public static readonly PHOTO_PATTERNS = [
-    /^(?:([a-zA-Z0-9._]{1,30})\/)?(p)\/([a-zA-Z0-9_-]+)/i
+    /^(?:(?<username>[a-zA-Z0-9._]{1,30})\/)?(p)\/(?<postId>[a-zA-Z0-9_-]+)/i
   ];
 
   public static readonly TV_PATTERNS = [
-    /^(?:([a-zA-Z0-9._]{1,30})\/)?(tv)\/([a-zA-Z0-9_-]+)/i
+    /^(?:(?<username>[a-zA-Z0-9._]{1,30})\/)?(tv)\/(?<postId>[a-zA-Z0-9_-]+)/i
   ];
 
   public static readonly VIDEO_PATTERNS = [
-    /^(?:([a-zA-Z0-9._]{1,30})\/)?(video)\/([a-zA-Z0-9_-]+)/i
+    /^(?:(?<username>[a-zA-Z0-9._]{1,30})\/)?(video)\/(?<postId>[a-zA-Z0-9_-]+)/i
   ];
 
   public static readonly REEL_PATTERNS = [
-    /^(?:([a-zA-Z0-9._]{1,30})\/)?(reels?)\/([a-zA-Z0-9_-]+)/i
+    /^(?:(?<username>[a-zA-Z0-9._]{1,30})\/)?(reels?)\/(?<postId>[a-zA-Z0-9_-]+)/i
   ];
 
   public static readonly STORY_PATTERNS = [
-    /^(?:([a-zA-Z0-9._]{1,30})\/)?(stories)\/([a-zA-Z0-9._]{1,30})(?:\/[a-zA-Z0-9_-]+)?\/?/i
+    /^(?:(?<username>[a-zA-Z0-9._]{1,30})\/)?(stories)\/(?<storyUsername>[a-zA-Z0-9._]{1,30})(?:\/(?<postId>[a-zA-Z0-9_-]+))?\/?/i
   ];
 
   public static readonly USERNAME_PATTERN = [
-    /^([a-zA-Z0-9._]{1,30})(?:\/(?:[^p/][\w.-]*)*)?\/?$/i
+    /^(?<username>[a-zA-Z0-9._]{1,30})(?:\/(?:[^p/][\w.-]*)*)?\/?$/i
   ];
 
   public static readonly USER_PROFILE_PATH_PATTERN = [
-    /^([a-zA-Z0-9._]{1,30})\/?(?!\w|\?.*)/i
+    /^(?<username>[a-zA-Z0-9._]{1,30})\/?(?!\w|\?.*)/i
   ];
 
   normalize(options: NormalizerOptions): NormalizedLinkResult<InstagramLinkType> | undefined {
@@ -68,13 +68,21 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
   private photos(options: NormalizerOptions): NormalizedLinkResult<InstagramLinkType> | undefined {
     for (const pattern of InstagramNormalizer.PHOTO_PATTERNS) {
       const match = options.url.match(pattern);
-      console.log(match);
       if (match) {
-        const link = match[1] ? `https://www.instagram.com/${match[1]}/p/${match[2]}` : `https://www.instagram.com/p/${match[2]}`;
+        const { username, postId } = match.groups ?? {};
+
+        const link = username
+          ? `https://www.instagram.com/${username}/p/${postId}`
+          : `https://www.instagram.com/p/${postId}`;
+
         return {
           url: link,
           type: "instagram_post",
           network: "instagram",
+          data: {
+            username,
+            postId,
+          },
         };
       }
     }
@@ -84,6 +92,9 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
         url: `https://www.instagram.com/p/${options.url}`,
         type: "instagram_post",
         network: "instagram",
+        data: {
+          postId: options.url,
+        },
       };
     }
 

@@ -45,9 +45,9 @@ export type NormalizedLinkResult<T extends SocialLinkType = SocialLinkType> = {
   network: SocialNetwork;
   error?: string;
   data?: {
-    post_id?: string | number;
+    postId?: string | number;
     username?: string;
-    user_id?: string | number;
+    userId?: string | number;
     [key: string | number]: unknown;
   }
 }
