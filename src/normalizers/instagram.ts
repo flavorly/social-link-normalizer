@@ -1,5 +1,6 @@
 import type { InstagramLinkType, SocialLinkType } from "../types/link-types";
 import type { NormalizedLinkResult, Normalizer, NormalizerOptions } from "../types/shared";
+import { removeProtocalAndWWW } from "../utils/url";
 
 export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
 
@@ -11,6 +12,11 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
   public static readonly USER_PROFILE_PATH_PATTERN = /^https?:\/\/(?:www\.)?instagram\.com\/([a-zA-Z0-9._]{1,30})\/?(?!\w|\?.*)/i;
 
   normalize(options: NormalizerOptions): NormalizedLinkResult<InstagramLinkType> {
+
+    const url = removeProtocalAndWWW(options.url.toString());
+
+    
+
     return {
       url: "works!",
       type: "instagram_likes",
@@ -25,7 +31,7 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
   private isInstagramReel(url: string): boolean {
     return InstagramNormalizer.REEL_PATTERNS.some(pattern => pattern.test(url));
   }
-  
+
 
   private fromShortCodeToMediaId(code: string): string | undefined {
     try {
