@@ -16,10 +16,6 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
     /^(?:(?<username>[a-zA-Z0-9._]{1,30})\/)?(tv)\/(?<postId>[a-zA-Z0-9_-]+)/i
   ];
 
-  public static readonly VIDEO_PATTERNS = [
-    /^(?:(?<username>[a-zA-Z0-9._]{1,30})\/)?(video)\/(?<postId>[a-zA-Z0-9_-]+)/i
-  ];
-
   public static readonly REEL_PATTERNS = [
     /^(?:(?<username>[a-zA-Z0-9._]{1,30})\/)?(reels?)\/(?<postId>[a-zA-Z0-9_-]+)/i
   ];
@@ -49,11 +45,12 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
 
     const checks = [
       this.photos({ ...options, url: path }),
-      // this.media(path),
-      // this.reels(path),
-      // this.stories(path),
-      // this.username(path),
-      // this.userProfile(path),
+      this.tv({ ...options, url: path }),
+      this.reels({ ...options, url: path }),
+      this.stories({ ...options, url: path }),
+      // this.stories({ ...options, url: path }),
+      // this.username({ ...options, url: path }),
+      // this.userProfile({ ...options, url: path }),
     ];
 
     for (const check of checks) {
@@ -70,39 +67,47 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
       const match = options.url.match(pattern);
       if (match) {
         const { username, postId } = match.groups ?? {};
-
-
-        const link = username
-          ? `https://www.instagram.com/${username}/p/${postId}`
-          : `https://www.instagram.com/p/${postId}`;
-
-        if (!postId) {
-          return undefined;
-        }
-
-        return {
-          url: link,
-          type: "instagram_post",
-          network: "instagram",
-          data: {
-            username,
-            postId,
-            mediaId: this.fromShortCodeToMediaId(postId),
-          },
-        };
+        if (!postId) return undefined;
+        return this.toGenericUrl({ username, postId, type: "instagram_post", urlPath: "p" });
       }
     }
 
     if (options.whenNotFoundUse === "instagram_post") {
-      return {
-        url: `https://www.instagram.com/p/${options.url}`,
-        type: "instagram_post",
-        network: "instagram",
-        data: {
-          postId: options.url,
-          mediaId: this.fromShortCodeToMediaId(options.url),
-        },
-      };
+      return this.toGenericUrl({ postId: options.url, type: "instagram_post", urlPath: "p" });
+    }
+
+    return undefined;
+  }
+
+  tv(options: NormalizerOptions): NormalizedLinkResult<InstagramLinkType> | undefined {
+    for (const pattern of InstagramNormalizer.TV_PATTERNS) {
+      const match = options.url.match(pattern);
+      if (match) {
+        const { username, postId } = match.groups ?? {};
+        if (!postId) return undefined;
+        return this.toGenericUrl({ username, postId, type: "instagram_igtv", urlPath: "tv" });
+      }
+    }
+
+    if (options.whenNotFoundUse === "instagram_igtv") {
+      return this.toGenericUrl({ postId: options.url, type: "instagram_igtv", urlPath: "tv" });
+    }
+
+    return undefined;
+  }
+
+  reels(options: NormalizerOptions): NormalizedLinkResult<InstagramLinkType> | undefined {
+    for (const pattern of InstagramNormalizer.REEL_PATTERNS) {
+      const match = options.url.match(pattern);
+      if (match) {
+        const { username, postId } = match.groups ?? {};
+        if (!postId) return undefined;
+        return this.toGenericUrl({ username, postId, type: "instagram_reel", urlPath: "reel" });
+      }
+    }
+
+    if (options.whenNotFoundUse === "instagram_reel") {
+      return this.toGenericUrl({ postId: options.url, type: "instagram_reel", urlPath: "reel" });
     }
 
     return undefined;
@@ -125,6 +130,28 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
     } catch {
       return undefined;
     }
+  }
+
+  private toGenericUrl(options: {
+    username?: string;
+    postId: string;
+    type: InstagramLinkType;
+    urlPath: string;
+  }): NormalizedLinkResult<InstagramLinkType> {
+    const link = options.username
+      ? `https://www.instagram.com/${options.username}/${options.urlPath}/${options.postId}`
+      : `https://www.instagram.com/${options.urlPath}/${options.postId}`;
+
+    return {
+      url: link,
+      type: options.type,
+      network: "instagram",
+      data: {
+        username: options.username,
+        postId: options.postId,
+        mediaId: this.fromShortCodeToMediaId(options.postId),
+      },
+    };
   }
 
   fromMediaIdtoShortCode(mediaId: string | number): string | undefined {
