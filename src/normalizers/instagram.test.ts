@@ -257,10 +257,7 @@ describe('instagram-normalizer', () => {
     ];
 
     for (const url of profileCases) {
-
-      //console.log('Trying for', url);
       const resultProfile = normalizer.normalize({ url, as: 'instagram_profile' });
-
       expect(resultProfile).toBeDefined();
       expect(resultProfile?.type).toBe('instagram_profile');
       expect(resultProfile?.network).toBe('instagram');

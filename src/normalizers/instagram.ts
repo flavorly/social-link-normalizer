@@ -32,7 +32,7 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
       /^stories\/(?<storyUsername>[a-zA-Z0-9._]{1,30})(?:\/(?<postId>[a-zA-Z0-9_-]+))?\/?$/i,
     ],
     profile: [
-      /^(?!stories|reels?|tv|p|video)(?<username>[a-zA-Z0-9._]{1,30})\/?$/i,
+      /^(?!stories|reels?|tv|p|video)@?(?<username>[a-zA-Z0-9._]{1,30})(?:\/(?:p|reels?|tv)\/[a-zA-Z0-9_-]+)?\/?$/i,
     ],
   };
 
