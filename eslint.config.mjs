@@ -1,9 +1,9 @@
-import unjs from "eslint-config-unjs";
+import unjs from 'eslint-config-unjs';
 
 export default unjs({
   ignores: [],
   rules: {
-    quotes: ["error", "single"],
+    quotes: ['error', 'single'],
   },
   markdown: {
     rules: {},

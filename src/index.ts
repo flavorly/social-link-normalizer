@@ -1,5 +1,5 @@
-import type { NormalizerOptions } from "./types/shared";
+import type { NormalizerOptions } from './types/shared';
 
 export function normalize(options: NormalizerOptions): string {
-  return "works!";
+  return 'works!';
 }

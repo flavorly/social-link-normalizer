@@ -1,10 +1,10 @@
-import type { InstagramLinkType } from "../types/link-types";
+import type { InstagramLinkType } from '../types/link-types';
 import type {
   NormalizedLinkResult,
   Normalizer,
   NormalizerOptions,
-} from "../types/shared";
-import { removeProtocolAndWWW, removeQueryString } from "../utils/url";
+} from '../types/shared';
+import { removeProtocolAndWWW, removeQueryString } from '../utils/url';
 
 type InstagramNormalizerResult =
   | NormalizedLinkResult<InstagramLinkType>
@@ -84,17 +84,17 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
         return this.toGenericUrl({
           username,
           postId,
-          type: "instagram_post",
-          urlPath: "p",
+          type: 'instagram_post',
+          urlPath: 'p',
         });
       }
     }
 
-    if (options.onNotFoundTryWith === "instagram_post") {
+    if (options.onNotFoundTryWith === 'instagram_post') {
       return this.toGenericUrl({
         postId: options.url,
-        type: "instagram_post",
-        urlPath: "p",
+        type: 'instagram_post',
+        urlPath: 'p',
       });
     }
 
@@ -110,17 +110,17 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
         return this.toGenericUrl({
           username,
           postId,
-          type: "instagram_igtv",
-          urlPath: "tv",
+          type: 'instagram_igtv',
+          urlPath: 'tv',
         });
       }
     }
 
-    if (options.onNotFoundTryWith === "instagram_igtv") {
+    if (options.onNotFoundTryWith === 'instagram_igtv') {
       return this.toGenericUrl({
         postId: options.url,
-        type: "instagram_igtv",
-        urlPath: "tv",
+        type: 'instagram_igtv',
+        urlPath: 'tv',
       });
     }
 
@@ -136,17 +136,17 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
         return this.toGenericUrl({
           username,
           postId,
-          type: "instagram_reel",
-          urlPath: "reel",
+          type: 'instagram_reel',
+          urlPath: 'reel',
         });
       }
     }
 
-    if (options.onNotFoundTryWith === "instagram_reel") {
+    if (options.onNotFoundTryWith === 'instagram_reel') {
       return this.toGenericUrl({
         postId: options.url,
-        type: "instagram_reel",
-        urlPath: "reel",
+        type: 'instagram_reel',
+        urlPath: 'reel',
       });
     }
 
@@ -159,7 +159,7 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
       if (match) {
         const { storyUsername, postId } = match.groups ?? {};
 
-        const targetUsername = storyUsername ?? options.url.replace("@", "");
+        const targetUsername = storyUsername ?? options.url.replace('@', '');
         if (!targetUsername) return undefined;
 
         // Stories have a different URL structure
@@ -169,8 +169,8 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
 
         return {
           url: link,
-          type: "instagram_story",
-          network: "instagram",
+          type: 'instagram_story',
+          network: 'instagram',
           data: {
             username: targetUsername,
             ...(postId && {
@@ -181,12 +181,12 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
       }
     }
 
-    if (options.onNotFoundTryWith === "instagram_story") {
-      const username = options.url.replace("@", "");
+    if (options.onNotFoundTryWith === 'instagram_story') {
+      const username = options.url.replace('@', '');
       return {
         url: `https://www.instagram.com/stories/${username}/`,
-        type: "instagram_story",
-        network: "instagram",
+        type: 'instagram_story',
+        network: 'instagram',
         data: {
           username,
         },
@@ -206,8 +206,8 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
         }
         return {
           url: `https://www.instagram.com/${username}/`,
-          type: "instagram_profile",
-          network: "instagram",
+          type: 'instagram_profile',
+          network: 'instagram',
           data: {
             username,
           },
@@ -215,12 +215,12 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
       }
     }
 
-    if (options.onNotFoundTryWith === "instagram_profile") {
-      const username = options.url.replace(/^@/, "");
+    if (options.onNotFoundTryWith === 'instagram_profile') {
+      const username = options.url.replace(/^@/, '');
       return {
         url: `https://www.instagram.com/${username}/`,
-        type: "instagram_profile",
-        network: "instagram",
+        type: 'instagram_profile',
+        network: 'instagram',
         data: {
           username,
         },
@@ -232,14 +232,14 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
 
   fromShortCodeToMediaId(shortcode: string): string | undefined {
     try {
-      const code = "A".repeat(Math.max(0, 12 - shortcode.length)) + shortcode;
-      const standardBase64 = code.replace(/-/g, "+").replace(/_/g, "/");
+      const code = 'A'.repeat(Math.max(0, 12 - shortcode.length)) + shortcode;
+      const standardBase64 = code.replace(/-/g, '+').replace(/_/g, '/');
 
       const paddedBase64 = standardBase64.padEnd(
         Math.ceil(standardBase64.length / 4) * 4,
-        "=",
+        '=',
       );
-      const buffer = Buffer.from(paddedBase64, "base64");
+      const buffer = Buffer.from(paddedBase64, 'base64');
       let value = 0n;
       for (const byte of buffer) {
         value = (value << 8n) | BigInt(byte);
@@ -254,7 +254,7 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
     username?: string;
     postId: string;
     type: InstagramLinkType;
-    urlPath: "p" | "tv" | "reel";
+    urlPath: 'p' | 'tv' | 'reel';
   }): NormalizedLinkResult<InstagramLinkType> {
     const link = options.username
       ? `https://www.instagram.com/${options.username}/${options.urlPath}/${options.postId}`
@@ -263,7 +263,7 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
     return {
       url: link,
       type: options.type,
-      network: "instagram",
+      network: 'instagram',
       data: {
         username: options.username,
         postId: options.postId,
@@ -282,11 +282,11 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
         id >>= 8n;
       }
       let encoded = buffer
-        .toString("base64")
-        .replace(/\+/g, "-")
-        .replace(/\//g, "_")
-        .replace(/=/g, "");
-      encoded = encoded.replace(/^A+/, "").padStart(11, "A");
+        .toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=/g, '');
+      encoded = encoded.replace(/^A+/, '').padStart(11, 'A');
 
       return encoded;
     } catch {
