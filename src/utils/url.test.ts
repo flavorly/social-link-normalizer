@@ -1,15 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { removeProtocalAndWWW } from "./url";
+import { removeProtocolAndWWW } from "./url";
 
-describe("utils/url", () => {
-  it("should remove protocol and www from url", () => {
-    expect(removeProtocalAndWWW("https://www.google.com")).toBe("google.com");
-    expect(removeProtocalAndWWW("http://www.google.com")).toBe("google.com");
-    expect(removeProtocalAndWWW("www.google.com")).toBe("google.com");
-    expect(removeProtocalAndWWW("google.com")).toBe("google.com");
-    expect(removeProtocalAndWWW("ftp://www.google.com")).toBe("google.com");
-    expect(removeProtocalAndWWW("ssh://www.google.com")).toBe("google.com");
-    expect(removeProtocalAndWWW("http://www.google.com#hash")).toBe("google.com");
-    expect(removeProtocalAndWWW("http://www.google.com?query=1")).toBe("google.com?query=1");
+describe("url-utils", () => {
+  it("should remove protocol and www", () => {
+    expect(removeProtocolAndWWW("https://www.google.com")).toBe("google.com");
+    expect(removeProtocolAndWWW("http://www.google.com")).toBe("google.com");
+    expect(removeProtocolAndWWW("www.google.com")).toBe("google.com");
+    expect(removeProtocolAndWWW("google.com")).toBe("google.com");
+    expect(removeProtocolAndWWW("ftp://www.google.com")).toBe("google.com");
+    expect(removeProtocolAndWWW("ssh://www.google.com")).toBe("google.com");
+    expect(removeProtocolAndWWW("http://www.google.com#hash")).toBe(
+      "google.com",
+    );
+    expect(removeProtocolAndWWW("http://www.google.com?query=1")).toBe(
+      "google.com?query=1",
+    );
   });
 });

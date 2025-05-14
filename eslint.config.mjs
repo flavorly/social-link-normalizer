@@ -1,15 +1,11 @@
 import unjs from "eslint-config-unjs";
 
 export default unjs({
-  ignores: [
-    // ignore paths
-  ],
+  ignores: [],
   rules: {
-    // rule overrides
+    quotes: ["error", "single"],
   },
   markdown: {
-    rules: {
-      // markdown rule overrides
-    },
+    rules: {},
   },
 });

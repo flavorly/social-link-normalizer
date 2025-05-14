@@ -7,7 +7,7 @@
 
 <!-- /automd -->
 
-A package to normalize a wide range of social links, including:  Twitter, X, Instagram, Facebook, YouTube, Tiktok, Reddit.
+A package to normalize a wide range of social links, including: Twitter, X, Instagram, Facebook, YouTube, Tiktok, Reddit.
 This package aims to find invalid links or malformed links and return a valid link in a standard format, excluding any tracking parameters, uncessary query parameters, or other metadata.
 
 ## Usage
@@ -26,13 +26,13 @@ Import:
 **ESM** (Node.js, Bun, Deno)
 
 ```js
-import { normalize } from "social-link-normalizer";
+import {} from "pkg";
 ```
 
 **CDN** (Deno, Bun and Browsers)
 
 ```js
-import { normalize } from "https://esm.sh/social-link-normalizer";
+import {} from "https://esm.sh/pkg";
 ```
 
 <!-- /automd -->
