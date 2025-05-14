@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { InstagramNormalizer } from './instagram';
 
 describe('instagram-normalizer', () => {
-  it('should normalize all instagram photo URL formats', () => {
+
+  it('can normalize posts', () => {
     const normalizer = new InstagramNormalizer();
 
     const testCases = [
@@ -25,7 +26,6 @@ describe('instagram-normalizer', () => {
 
     for (const url of testCases) {
       const result = normalizer.normalize({ url });
-      console.log(result);
       expect(result).toBeDefined();
 
       const expectedUrl = url.includes('/elonmusk/')
@@ -48,11 +48,12 @@ describe('instagram-normalizer', () => {
     }
   });
 
-  it('should handle whenNotFoundUse option for non-matching URLs', () => {
+  it('can fallback to a specific type when not found', () => {
     const normalizer = new InstagramNormalizer();
     const testCases = ['foo', 'bar123', 'some-random-text', 'CzZ0Z_vjF8b'];
 
     for (const postId of testCases) {
+
       const result = normalizer.normalize({
         url: postId,
         onNotFoundTryWith: 'instagram_post',
@@ -63,9 +64,7 @@ describe('instagram-normalizer', () => {
       expect(result?.type).toBe('instagram_post');
       expect(result?.network).toBe('instagram');
       expect(result?.data?.mediaId).toBeDefined();
-      expect(result?.data?.mediaId).toBe(
-        normalizer.fromShortCodeToMediaId(postId),
-      );
+      expect(result?.data?.mediaId).toBe(normalizer.fromShortCodeToMediaId(postId));
       expect(result?.data?.postId).toBe(postId);
     }
 
@@ -76,11 +75,11 @@ describe('instagram-normalizer', () => {
     }
   });
 
-  it('should normalize all instagram reel URL formats', () => {
+  it('can normalize reels', () => {
     const normalizer = new InstagramNormalizer();
 
     const testCases = [
-      'https://www.instagram.com/camila_cabral_/reel/DAVtfMKudel?igsh=MXFhZmVudHNl',
+      'https://www.instagram.com/camilacoelho/reel/DAVtfMKudel?igsh=MXFhZmVudHNl',
       'https://www.instagram.com/reel/DAVtfMKudel',
       'https://www.instagram.com/reel/DAVtfMKudel/',
       'instagram.com/reel/DAVtfMKudel',
@@ -93,8 +92,8 @@ describe('instagram-normalizer', () => {
       const result = normalizer.normalize({ url });
       expect(result).toBeDefined();
 
-      const expectedUrl = url.includes('/camila_cabral_/')
-        ? 'https://www.instagram.com/camila_cabral_/reel/DAVtfMKudel'
+      const expectedUrl = url.includes('/camilacoelho/')
+        ? 'https://www.instagram.com/camilacoelho/reel/DAVtfMKudel'
         : 'https://www.instagram.com/reel/DAVtfMKudel';
 
       expect(result?.url).toBe(expectedUrl);
@@ -106,8 +105,8 @@ describe('instagram-normalizer', () => {
       );
       expect(result?.data?.postId).toBe('DAVtfMKudel');
 
-      if (url.includes('/camila_cabral_/')) {
-        expect(result?.data?.username).toBe('camila_cabral_');
+      if (url.includes('/camilacoelho/')) {
+        expect(result?.data?.username).toBe('camilacoelho');
       }
     }
 
@@ -125,7 +124,7 @@ describe('instagram-normalizer', () => {
     expect(result?.data?.postId).toBe('DAVtfMKudel');
   });
 
-  it('should normalize all instagram story URL formats', () => {
+  it('can normalize stories', () => {
     const normalizer = new InstagramNormalizer();
 
     const testCases = [
@@ -181,7 +180,7 @@ describe('instagram-normalizer', () => {
     }
   });
 
-  it('should normalize all instagram profile URL formats', () => {
+  it('can normalize profiles', () => {
     const normalizer = new InstagramNormalizer();
 
     const testCases = [
@@ -217,6 +216,7 @@ describe('instagram-normalizer', () => {
     ];
 
     for (const username of usernameCases) {
+
       const result = normalizer.normalize({
         url: username,
         onNotFoundTryWith: 'instagram_profile',
@@ -230,7 +230,7 @@ describe('instagram-normalizer', () => {
     }
   });
 
-  it('can force resolve as a specific type', () => {
+  it('can force to a specific type', () => {
     const normalizer = new InstagramNormalizer();
 
     // Resolve post

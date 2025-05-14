@@ -17,6 +17,7 @@ type InstagramNormalizerChecks = Record<
   InstagramNormalizerCheckFn
 >;
 export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
+
   private static readonly PATTERNS = {
     post: [
       /^(?:(?<username>[a-zA-Z0-9._]{1,30})\/)?(p)\/(?<postId>[a-zA-Z0-9_-]+)/i,
@@ -65,13 +66,13 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
     // We get the path extracted or use the URL
     path = path ?? options.url;
 
-    // Otherwise, we try to resolve the type based on the path
-    for (const check of Object.values(checks)) {
-      if (check) {
-        return check(path);
+    for (const [key, check] of Object.entries(checks)) {
+      const result = check(path);
+      if (result) {
+        console.log('Found', key);
+        return result;
       }
     }
-
     return undefined;
   }
 
