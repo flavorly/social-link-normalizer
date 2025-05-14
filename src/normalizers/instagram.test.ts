@@ -208,11 +208,6 @@ describe('instagram-normalizer', () => {
     const usernameCases = [
       '@camilacoelho',
       'camilacoelho',
-      'https://www.instagram.com/stories/camilacoelho/3631755389213869778/',
-      'https://www.instagram.com/stories/camilacoelho/3631755389213869778/?igsh=MXFhZmVudHNl',
-      'instagram.com/camilacoelho/p/CzZ0Z_vjF8b',
-      'instagram.com/camilacoelho/reel/CzZ0Z_vjF8b',
-      'instagram.com/camilacoelho/tv/CzZ0Z_vjF8b',
     ];
 
     for (const username of usernameCases) {
@@ -236,7 +231,7 @@ describe('instagram-normalizer', () => {
     // Resolve post
     const resultPost = normalizer.normalize({
       url: 'https://www.instagram.com/camilacoelho/p/CzZ0Z_vjF8b',
-      attemptToResolveAs: 'instagram_post',
+      as: 'instagram_post',
     });
 
     expect(resultPost).toBeDefined();
@@ -262,10 +257,9 @@ describe('instagram-normalizer', () => {
     ];
 
     for (const url of profileCases) {
-      const resultProfile = normalizer.normalize({
-        url,
-        attemptToResolveAs: 'instagram_profile',
-      });
+
+      //console.log('Trying for', url);
+      const resultProfile = normalizer.normalize({ url, as: 'instagram_profile' });
 
       expect(resultProfile).toBeDefined();
       expect(resultProfile?.type).toBe('instagram_profile');

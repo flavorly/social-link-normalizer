@@ -5,7 +5,7 @@ export interface NormalizerOptions {
   type?: SocialLinkType;
   discovery?: boolean;
   onNotFoundTryWith?: SocialLinkType;
-  attemptToResolveAs?: SocialLinkType;
+  as?: SocialLinkType;
 }
 
 export type SocialNetwork =

@@ -50,13 +50,13 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
       instagram_profile: (url) => this.username({ ...options, url }),
     };
 
-    // If we have a specific type to resolve, we use that
-    if (options.attemptToResolveAs) {
-      return checks[options.attemptToResolveAs as InstagramLinkType](url);
-    }
-
     // Remove the Instagram domain and get the path only
     let path = url.match(/^(?:instagram\.com|instagr\.am)\/(.+)$/i)?.[1];
+
+    // If we have a specific type to resolve, we use that
+    if (options.as) {
+      return checks[options.as as InstagramLinkType](path ?? url);
+    }
 
     // No domain was found, and we dont want a fallback, so we return nothing
     if (!options.onNotFoundTryWith && !path) {
@@ -69,7 +69,6 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
     for (const [key, check] of Object.entries(checks)) {
       const result = check(path);
       if (result) {
-        console.log('Found', key);
         return result;
       }
     }
@@ -79,6 +78,7 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
   photos(options: NormalizerOptions): InstagramNormalizerResult {
     for (const pattern of InstagramNormalizer.PATTERNS.post) {
       const match = options.url.match(pattern);
+      console.log('Found post', match, options.url);
       if (match) {
         const { username, postId } = match.groups ?? {};
         if (!postId) return undefined;
@@ -200,6 +200,7 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
   username(options: NormalizerOptions): InstagramNormalizerResult {
     for (const pattern of InstagramNormalizer.PATTERNS.profile) {
       const match = options.url.match(pattern);
+      console.log('Found profile Matches/URL', match, options.url);
       if (match) {
         const { username } = match.groups ?? {};
         if (!username) {
