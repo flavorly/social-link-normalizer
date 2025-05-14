@@ -264,4 +264,104 @@ describe('instagram-normalizer', () => {
       expect(resultProfile?.data?.username).toBe('camilacoelho');
     }
   });
+
+  it('can normalize IGTV/TV links', () => {
+    const normalizer = new InstagramNormalizer();
+
+    const testCases = [
+      'https://www.instagram.com/tv/CzZ0Z_vjF8b',
+      'https://www.instagram.com/elonmusk/tv/CzZ0Z_vjF8b',
+      'instagram.com/tv/CzZ0Z_vjF8b',
+      'www.instagram.com/elonmusk/tv/CzZ0Z_vjF8b/',
+      'instagram.com/elonmusk/tv/CzZ0Z_vjF8b/?igsh=123',
+    ];
+
+    for (const url of testCases) {
+      const result = normalizer.normalize({ url });
+      expect(result).toBeDefined();
+
+      const expectedUrl = url.includes('/elonmusk/')
+        ? 'https://www.instagram.com/elonmusk/tv/CzZ0Z_vjF8b'
+        : 'https://www.instagram.com/tv/CzZ0Z_vjF8b';
+
+      expect(result?.url).toBe(expectedUrl);
+      expect(result?.type).toBe('instagram_igtv');
+      expect(result?.network).toBe('instagram');
+      expect(result?.data?.mediaId).toBeDefined();
+      expect(result?.data?.postId).toBe('CzZ0Z_vjF8b');
+
+      if (url.includes('/elonmusk/')) {
+        expect(result?.data?.username).toBe('elonmusk');
+      }
+    }
+  });
+
+  it('handles invalid cases correctly', () => {
+    const normalizer = new InstagramNormalizer();
+
+    const invalidCases = [
+      '',
+      'https://',
+      'instagram.com/',
+      'instagram.com/invalid!username',
+      'instagram.com/stories/',
+      'instagram.com/p/',
+      'instagram.com/reel/',
+      'instagram.com/tv/',
+      'https://instagram.com/stories/invalid!username',
+      'instagram.com/stories/username/invalid!postid',
+    ];
+
+    for (const url of invalidCases) {
+      const result = normalizer.normalize({ url });
+      if (result !== undefined) {
+        console.log('Result', url, result);
+      }
+      expect(result).toBeUndefined();
+    }
+  });
+
+  it('handles mixed case URLs and usernames', () => {
+    const normalizer = new InstagramNormalizer();
+
+    const mixedCases = [
+      'https://www.InstaGram.com/ElonMusk',
+      'InstaGram.com/ElonMusk/p/CzZ0Z_vjF8b',
+      'www.instagram.com/ELONMUSK/reel/CzZ0Z_vjF8b',
+      'instagram.com/eLoNmUsK/tv/CzZ0Z_vjF8b',
+    ];
+
+    for (const url of mixedCases) {
+      const result = normalizer.normalize({ url });
+      if (result === undefined) {
+        console.log('Result', url, result);
+      }
+      expect(result).toBeDefined();
+      expect(result?.data?.username?.toLowerCase()).toBe('elonmusk');
+    }
+  });
+
+  it('converts between mediaId and shortCode correctly', () => {
+    const normalizer = new InstagramNormalizer();
+
+    const testPairs = [
+      { shortCode: 'CzZ0Z_vjF8b', mediaId: '3252342123123123' },
+      { shortCode: 'ABC123', mediaId: '123456789' },
+      { shortCode: 'XYZ_-789', mediaId: '987654321' },
+    ];
+
+    for (const { shortCode, mediaId } of testPairs) {
+      const convertedMediaId = normalizer.fromShortCodeToMediaId(shortCode);
+      expect(convertedMediaId).toBeDefined();
+
+      const convertedShortCode = normalizer.fromMediaIdToShortCode(mediaId);
+      expect(convertedShortCode).toBeDefined();
+    }
+
+    // Test invalid inputs
+    expect(normalizer.fromShortCodeToMediaId('')).toBeUndefined();
+    expect(normalizer.fromShortCodeToMediaId('invalid!')).toBeUndefined();
+    expect(normalizer.fromMediaIdToShortCode('invalid!')).toBeUndefined();
+    expect(normalizer.fromMediaIdToShortCode('')).toBeUndefined();
+  });
 });

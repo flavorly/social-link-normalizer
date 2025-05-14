@@ -4,6 +4,7 @@ import type {
   Normalizer,
   NormalizerOptions,
 } from '../types/shared';
+import { pipe } from '../utils/generic';
 import { removeProtocolAndWWW, removeQueryString } from '../utils/url';
 
 type InstagramNormalizerResult =
@@ -32,14 +33,18 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
       /^stories\/(?<storyUsername>[a-zA-Z0-9._]{1,30})(?:\/(?<postId>[a-zA-Z0-9_-]+))?\/?$/i,
     ],
     profile: [
-      /^(?!stories|reels?|tv|p|video)@?(?<username>[a-zA-Z0-9._]{1,30})(?:\/(?:p|reels?|tv)\/[a-zA-Z0-9_-]+)?\/?$/i,
+      /^(?!stories|reels?|tv|p|video)(?:@)?(?<username>[a-zA-Z0-9._]{1,30})(?:\/(?:p|reels?|tv)\/[a-zA-Z0-9_-]+)?\/?$/i,
+      /^@?(?<username>(?!stories|reels?|tv|p|video)[a-zA-Z0-9._]{1,30})$/i,
     ],
   };
 
   normalize(options: NormalizerOptions): InstagramNormalizerResult {
     // Remove protocol and www
-    let url = removeProtocolAndWWW(options.url);
-    url = removeQueryString(url);
+    const url = pipe(
+      options.url,
+      removeProtocolAndWWW,
+      removeQueryString,
+    );
 
     // Pipeline for each type
     const checks: InstagramNormalizerChecks = {
@@ -78,7 +83,6 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
   photos(options: NormalizerOptions): InstagramNormalizerResult {
     for (const pattern of InstagramNormalizer.PATTERNS.post) {
       const match = options.url.match(pattern);
-      console.log('Found post', match, options.url);
       if (match) {
         const { username, postId } = match.groups ?? {};
         if (!postId) return undefined;
@@ -161,7 +165,9 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
         const { storyUsername, postId } = match.groups ?? {};
 
         const targetUsername = storyUsername ?? options.url.replace('@', '');
-        if (!targetUsername) return undefined;
+        if (!targetUsername) {
+          return undefined;
+        }
 
         // Stories have a different URL structure
         const link = postId
@@ -200,7 +206,6 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
   username(options: NormalizerOptions): InstagramNormalizerResult {
     for (const pattern of InstagramNormalizer.PATTERNS.profile) {
       const match = options.url.match(pattern);
-      console.log('Found profile Matches/URL', match, options.url);
       if (match) {
         const { username } = match.groups ?? {};
         if (!username) {
@@ -234,6 +239,7 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
 
   fromShortCodeToMediaId(shortcode: string): string | undefined {
     try {
+      if (!shortcode || !/^[A-Za-z0-9_-]+$/.test(shortcode)) return undefined;
       const code = 'A'.repeat(Math.max(0, 12 - shortcode.length)) + shortcode;
       const standardBase64 = code.replace(/-/g, '+').replace(/_/g, '/');
 
@@ -246,7 +252,8 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
       for (const byte of buffer) {
         value = (value << 8n) | BigInt(byte);
       }
-      return value.toString();
+      const result = value.toString();
+      return result === '0' ? undefined : result;
     } catch {
       return undefined;
     }
@@ -276,6 +283,7 @@ export class InstagramNormalizer implements Normalizer<InstagramLinkType> {
 
   fromMediaIdToShortCode(mediaId: string | number): string | undefined {
     try {
+      if (!mediaId) return undefined;
       let id = BigInt(mediaId);
 
       const buffer = Buffer.alloc(9);
