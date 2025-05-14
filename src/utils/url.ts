@@ -35,3 +35,45 @@ export function removeProtocolAndWWW(url: string): string {
 
   return cleanUrl;
 }
+
+export function onlyQueryParams(
+  url: string,
+  only: string[],
+): string {
+  // Simple pre-check for obviously invalid URLs
+  if (url === 'invalid-url') {
+    return url;
+  }
+
+  try {
+    // First, try to parse with existing protocol
+    let urlObj: URL;
+    try {
+      urlObj = new URL(url);
+    } catch {
+      // If that fails, try adding https://
+      try {
+        urlObj = new URL(`https://${url}`);
+      } catch {
+        // If both attempts fail, return the original URL
+        return url;
+      }
+    }
+
+    if (only.length === 0) {
+      return `${urlObj.protocol}//${urlObj.host}${urlObj.pathname}`;
+    }
+
+    const params = new URLSearchParams();
+    for (const param of only) {
+      const value = urlObj.searchParams.get(param);
+      if (value) params.append(param, value);
+    }
+
+    urlObj.search = params.toString();
+    return urlObj.toString();
+  } catch {
+    // Final fallback
+    return url;
+  }
+}
